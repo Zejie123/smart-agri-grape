@@ -1,0 +1,22 @@
+# =====================================================
+# 智慧农业平台后端配置
+# 所有 ${变量:默认值} 均可通过环境变量或命令行参数覆盖。
+# 例如：启动时加 --server.port=9090 或设置环境变量 SERVER_PORT=9090
+# =====================================================
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: ${CONTEXT_PATH:/api}
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:smart_agri_grape}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:5201314}
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

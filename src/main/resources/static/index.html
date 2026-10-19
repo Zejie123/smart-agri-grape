@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧农业系统大屏</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100vw; height: 100vh; overflow: hidden; background: #0a1a33; color: #fff; font-family: "Microsoft YaHei", sans-serif; }
+
+    .header { height: 8vh; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; background: linear-gradient(90deg, #0a1a33, #00d4ff, #0a1a33); border-bottom: 1px solid #00d4ff; }
+    .header-left { display: flex; align-items: center; gap: 30px; }
+    .header-left h1 { font-size: 28px; color: #00d4ff; }
+    .nav-tabs { display: flex; gap: 20px; }
+    .tab { font-size: 16px; color: #fff; cursor: pointer; padding: 5px 10px; transition: all 0.3s; }
+    .tab.active { color: #00d4ff; border-bottom: 2px solid #00d4ff; }
+    .tab:hover { color: #00d4ff; }
+    .header-right { display: flex; align-items: center; gap: 20px; font-size: 14px; color: #fff; }
+
+    .main-content { display: flex; height: 92vh; padding: 10px; gap: 10px; }
+    .page { display: none; width: 100%; height: 100%; }
+    .page.active { display: block; }
+
+    .left-col, .right-col { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .center-col { width: 50%; display: flex; flex-direction: column; gap: 10px; }
+
+    .module { background: rgba(0, 30, 60, 0.8); border: 1px solid #00d4ff; border-radius: 4px; padding: 10px; position: relative; transition: all 0.3s; }
+    .module:hover { box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+    .module-title { font-size: 16px; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; }
+
+    .video-module { height: 30%; }
+    .video-placeholder { width: 100%; height: calc(100% - 30px); background: rgba(0, 212, 255, 0.1); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; }
+    .video-placeholder:hover { background: rgba(0, 212, 255, 0.2); }
+    .play-icon { width: 50px; height: 50px; background: rgba(0, 212, 255, 0.8); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+
+    .table-container { width: 100%; height: calc(100% - 30px); overflow-y: auto; }
+    .table-container table { width: 100%; border-collapse: collapse; }
+    .table-container th, .table-container td { padding: 8px; text-align: center; border-bottom: 1px solid rgba(0, 212, 255, 0.2); transition: background 0.3s; font-size: 12px; }
+    .table-container th { background: rgba(0, 212, 255, 0.1); color: #00d4ff; position: sticky; top: 0; }
+    .table-container tbody tr:hover { background: rgba(0, 212, 255, 0.1); cursor: pointer; }
+    .up { color: #00ff9d; }
+    .down { color: #ff6b6b; }
+
+    .staff-module { height: 30%; }
+    .staff-info { display: flex; justify-content: space-between; margin-bottom: 10px; padding: 5px 10px; background: rgba(0, 212, 255, 0.1); border-radius: 4px; }
+
+    .chart-box { width: 100%; height: 200px; cursor: pointer; }
+
+    .map-module { height: 65%; position: relative; }
+    .kpi-cards { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+    .kpi-card { background: rgba(0, 30, 60, 0.9); border: 1px solid #00d4ff; padding: 10px 20px; border-radius: 4px; cursor: pointer; transition: all 0.3s; }
+    .kpi-card:hover { box-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+    .kpi-card p { margin: 0; font-size: 14px; color: #fff; }
+    .kpi-card h2 { margin: 5px 0 0; font-size: 24px; color: #00d4ff; }
+    .kpi-card span { font-size: 14px; color: #ffd700; }
+    .map-box { width: 100%; height: 70%; }
+    .map-sub-chart { position: absolute; bottom: 10px; left: 10px; width: 40%; height: 25%; }
+    .map-scale { position: absolute; bottom: 10px; left: 10px; font-size: 12px; color: #fff; }
+    .farm-info-card { position: absolute; top: 10px; right: 10px; width: 32%; background: rgba(0, 30, 60, 0.9); border: 1px solid #00d4ff; padding: 10px; border-radius: 4px; z-index: 10; cursor: pointer; transition: all 0.3s; }
+    .farm-info-card:hover { box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+    .farm-info-card h3 { margin: 0 0 10px; color: #fff; }
+    .farm-info-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 4px; margin: 10px 0; }
+    .farm-info-card p { margin: 5px 0; font-size: 14px; }
+    .alert-info h4 { margin: 10px 0 5px; color: #fff; }
+    .alert-info ul { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+    .alert-text { color: #ff6b6b; }
+
+    .bottom-stats { display: flex; gap: 10px; height: 35%; }
+    .stat-item { flex: 1; background: rgba(0, 30, 60, 0.8); border: 1px solid #00d4ff; border-radius: 4px; padding: 10px; transition: all 0.3s; }
+    .stat-item:hover { box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+
+    .env-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .env-item { padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; color: #fff; cursor: pointer; transition: all 0.3s; }
+    .env-item:hover { transform: scale(1.02); }
+    .bg-yellow { background: rgba(255, 215, 0, 0.2); }
+    .bg-purple { background: rgba(176, 102, 255, 0.2); }
+    .bg-blue { background: rgba(0, 212, 255, 0.1); }
+    .env-item .value { color: #00d4ff; font-weight: bold; }
+
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+    .legend span { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+    .legend i { width: 10px; height: 10px; border-radius: 50%; }
+
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.7); display: none; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .modal-content {
+      background: #0a1a33; border: 2px solid #00d4ff; border-radius: 8px;
+      padding: 20px; width: 680px; max-width: 92%; position: relative;
+    }
+    .modal-close { position: absolute; top: 10px; right: 15px; font-size: 24px; color: #fff; cursor: pointer; transition: color 0.3s; }
+    .modal-close:hover { color: #00d4ff; }
+    .modal-title { font-size: 20px; color: #00d4ff; margin-bottom: 15px; }
+    .modal-body { font-size: 14px; line-height: 1.8; }
+
+    .alert-toast {
+      position: fixed; top: 20px; right: 20px; background: rgba(255, 107, 107, 0.9); border: 1px solid #ff6b6b;
+      color: #fff; padding: 15px 20px; border-radius: 4px; z-index: 99999; display: none; animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+    .gh-top-kpi { display: flex; gap: 15px; height: 18vh; margin-bottom: 10px; }
+    .gh-kpi-card {
+      flex: 1; background: rgba(0, 30, 60, 0.8); border: 1px solid #00d4ff; border-radius: 8px;
+      padding: 15px 20px; display: flex; align-items: center; gap: 15px; transition: all 0.3s; cursor: pointer;
+    }
+    .gh-kpi-card:hover { box-shadow: 0 0 15px rgba(0, 212, 255, 0.5); }
+    .gh-kpi-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .icon-blue { background: rgba(0, 212, 255, 0.2); color: #00d4ff; }
+    .icon-purple { background: rgba(176, 102, 255, 0.2); color: #b066ff; }
+    .icon-red { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+    .gh-kpi-title { font-size: 18px; color: #fff; margin-bottom: 5px; }
+    .gh-kpi-value { font-size: 28px; font-weight: bold; color: #00d4ff; }
+
+    .gh-main { display: flex; gap: 15px; height: calc(92vh - 18vh - 20px); }
+    .gh-left-col, .gh-right-col { width: 25%; display: flex; flex-direction: column; gap: 15px; }
+    .gh-center-col { width: 50%; display: flex; flex-direction: column; gap: 15px; }
+
+    .gh-chart-module, .gh-table-module { background: rgba(0, 30, 60, 0.8); border: 1px solid #00d4ff; border-radius: 8px; padding: 15px; flex: 1; }
+    .gh-chart-title { font-size: 18px; color: #fff; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .gh-chart-box { width: 100%; height: calc(100% - 30px); cursor: pointer; }
+
+    .gh-table-title { font-size: 16px; color: #fff; margin-bottom: 10px; text-align: right; }
+    .gh-table-container { width: 100%; height: calc(100% - 40px); overflow-y: auto; }
+    .gh-table-container table { width: 100%; border-collapse: collapse; }
+    .gh-table-container th, .gh-table-container td {
+      padding: 8px; text-align: center; border-bottom: 1px solid rgba(0, 212, 255, 0.2); font-size: 12px;
+    }
+    .gh-table-container th { background: rgba(0, 212, 255, 0.1); color: #00d4ff; position: sticky; top: 0; }
+    .gh-table-container tbody tr:hover { background: rgba(0, 212, 255, 0.1); cursor: pointer; }
+
+    .gh-map-legend {
+      position: absolute; bottom: 15px; right: 15px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #fff;
+    }
+    .gh-legend-item { display: flex; align-items: center; gap: 5px; }
+    .gh-legend-item i { width: 12px; height: 12px; border-radius: 2px; }
+
+    .quick-tool { position: fixed; right: 10px; top: 9vh; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
+    .tool-btn { width: 36px; height: 36px; background: rgba(0,30,60,.9); border: 1px solid #00d4ff; border-radius: 4px; color: #00d4ff; display: grid; place-items: center; cursor: pointer; transition: .3s; }
+    .tool-btn:hover { background: #00d4ff; color: #000; }
+
+    .device-main { display: flex; gap: 10px; height: 100%; }
+    .device-left { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .device-center { width: 50%; display: flex; flex-direction: column; gap: 10px; }
+    .device-right { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .device-card { background: rgba(0,30,60,.8); border: 1px solid #00d4ff; border-radius: 6px; padding: 12px; }
+    .device-title { font-size: 16px; margin-bottom: 10px; color: #fff; display: flex; align-items: center; gap: 6px; }
+    .device-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .device-item { background: rgba(0,212,255,.08); border-radius: 6px; padding: 10px; cursor: pointer; transition: .3s; }
+    .device-item:hover { background: rgba(0,212,255,.2); }
+    .device-item .d-name { font-size: 13px; color: #ccc; }
+    .device-item .d-value { font-size: 16px; color: #00d4ff; font-weight: bold; margin: 4px 0; }
+    .device-item .d-status { font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+    .status-on { background: rgba(0,255,157,.2); color: #00ff9d; }
+    .status-off { background: rgba(255,107,107,.2); color: #ff6b6b; }
+    .device-chart { width: 100%; height: 220px; }
+    .device-table { height: calc(100% - 40px); overflow-y: auto; }
+    .device-table table { width: 100%; border-collapse: collapse; }
+    .device-table th, .device-table td { padding: 8px; text-align: center; font-size: 12px; border-bottom: 1px solid rgba(0,212,255,.15); }
+    .device-table th { background: rgba(0,212,255,.1); color: #00d4ff; position: sticky; top: 0; }
+    .device-switch { display: inline-block; width: 40px; height: 20px; background: #666; border-radius: 20px; position: relative; cursor: pointer; transition: .3s; }
+    .device-switch::after { content: ''; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: .3s; }
+    .device-switch.on { background: #00d4ff; }
+    .device-switch.on::after { left: 22px; }
+    .alarm-log { height: 100%; overflow-y: auto; padding-right: 4px; }
+    .alarm-item { background: rgba(0,212,255,.05); padding: 8px; border-radius: 4px; margin-bottom: 6px; font-size: 12px; border-left: 3px solid #ff6b6b; }
+    .alarm-item .time { color: #999; }
+    .alarm-item .text { color: #ff6b6b; margin-left: 6px; }
+
+    .water-main { display: flex; gap: 10px; height: 100%; }
+    .water-left { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .water-center { width: 50%; display: flex; flex-direction: column; gap: 10px; }
+    .water-right { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .water-card { background: rgba(0,30,60,.8); border: 1px solid #00d4ff; border-radius: 6px; padding: 12px; }
+    .water-title { font-size: 16px; margin-bottom: 10px; color: #fff; }
+    .water-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .water-form label { font-size: 13px; color: #ccc; }
+    .water-form input { background: rgba(0,20,40,.9); border: 1px solid #00d4ff; color: #fff; padding: 6px 8px; border-radius: 4px; outline: none; }
+    .water-btn { background: #00d4ff; color: #000; border: none; padding: 8px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: .3s; }
+    .water-btn:hover { background: #009fbf; }
+    .water-chart { width: 100%; height: 220px; }
+    .water-table { height: calc(100% - 40px); overflow-y: auto; }
+    .water-table table { width: 100%; border-collapse: collapse; }
+    .water-table th, .water-table td { padding: 8px; text-align: center; font-size: 12px; border-bottom: 1px solid rgba(0,212,255,.15); }
+    .water-table th { background: rgba(0,212,255,.1); color: #00d4ff; position: sticky; top: 0; }
+    .recipe-item { background: rgba(0,212,255,.06); padding: 10px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+    .recipe-item:hover { background: rgba(0,212,255,.15); }
+    .recipe-name { color: #00d4ff; font-weight: bold; }
+    .recipe-desc { font-size: 12px; color: #ccc; margin-top: 4px; }
+
+    .set-main { display: flex; gap: 10px; height: 100%; }
+    .set-left { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .set-center { width: 50%; display: flex; flex-direction: column; gap: 10px; }
+    .set-right { width: 25%; display: flex; flex-direction: column; gap: 10px; }
+    .set-card { background: rgba(0,30,60,.8); border: 1px solid #00d4ff; border-radius: 6px; padding: 12px; }
+    .set-title { font-size: 16px; margin-bottom: 10px; color: #fff; }
+    .set-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(0,212,255,.1); }
+    .set-label { font-size: 14px; color: #fff; }
+    .log-list { height: calc(100% - 40px); overflow-y: auto; }
+    .log-item { padding: 8px; font-size: 12px; border-left: 2px solid #00d4ff; margin-bottom: 6px; background: rgba(0,212,255,.04); }
+    .log-time { color: #999; }
+    .log-text { color: #fff; margin-left: 6px; }
+    .user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,212,255,.06); border-radius: 6px; margin-bottom: 8px; }
+    .user-name { color: #00d4ff; }
+    .user-role { font-size: 12px; color: #ccc; }
+    .backup-btn { background: #00d4ff; color: #000; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+    .search-bar { position: fixed; top: 9vh; left: 10px; z-index: 999; display: flex; gap: 6px; }
+    .search-input { background: rgba(0,30,60,.9); border: 1px solid #00d4ff; color: #fff; padding: 6px 10px; border-radius: 4px; width: 220px; outline: none; }
+    .search-btn { background: #00d4ff; color: #000; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #00d4ff; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: rgba(0,30,60,.5); }
+
+    .farming-main { display: flex; gap: 10px; height: 100%; }
+    .farming-left { width: 30%; display: flex; flex-direction: column; gap: 10px; }
+    .farming-center { width: 40%; display: flex; flex-direction: column; gap: 10px; }
+    .farming-right { width: 30%; display: flex; flex-direction: column; gap: 10px; }
+
+    .farming-card { background: rgba(0,30,60,.8); border: 1px solid #00d4ff; border-radius: 6px; padding: 12px; flex: 1; display: flex; flex-direction: column; }
+    .farming-title { font-size: 16px; margin-bottom: 10px; color: #fff; display: flex; align-items: center; gap: 6px; }
+
+    .farming-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 12px; }
+    .calendar-header { color: #00d4ff; font-weight: bold; padding: 5px 0; }
+    .calendar-day { padding: 8px 0; border-radius: 4px; cursor: pointer; transition: .3s; }
+    .calendar-day:hover { background: rgba(0,212,255,.2); }
+    .calendar-day.today { background: #00d4ff; color: #000; font-weight: bold; }
+    .calendar-day.has-event { border: 1px solid #ffd700; }
+
+    .farming-table { flex: 1; overflow-y: auto; }
+    .farming-table table { width: 100%; border-collapse: collapse; }
+    .farming-table th, .farming-table td { padding: 8px; text-align: center; font-size: 12px; border-bottom: 1px solid rgba(0,212,255,.15); }
+    .farming-table th { background: rgba(0,212,255,.1); color: #00d4ff; position: sticky; top: 0; }
+    .farming-table tbody tr:hover { background: rgba(0,212,255,.1); }
+
+    .add-btn { background: #00d4ff; color: #000; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-bottom: 10px; align-self: flex-start; }
+    .add-btn:hover { background: #009fbf; }
+
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; color: #ccc; margin-bottom: 5px; font-size: 13px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; background: rgba(0,20,40,.9); border: 1px solid #00d4ff; color: #fff;
+      padding: 8px; border-radius: 4px; outline: none;
+    }
+    .form-group textarea { resize: vertical; height: 80px; }
+
+    .weather-module { height: 35%; }
+    .weather-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; height: calc(100% - 30px); align-items: center; }
+    .weather-item {
+      min-width: 80px; background: rgba(0,212,255,.08); border-radius: 6px; padding: 10px; text-align: center;
+      display: flex; flex-direction: column; gap: 5px; transition: .3s;
+    }
+    .weather-item:hover { background: rgba(0,212,255,.2); }
+    .weather-date { font-size: 12px; color: #ccc; }
+    .weather-icon { font-size: 24px; }
+    .weather-temp { font-size: 14px; color: #00d4ff; font-weight: bold; }
+    .weather-desc { font-size: 11px; color: #fff; }
+
+    .price-module { height: 35%; }
+    .completion-module { height: 30%; }
+
+    /* —————— 【新增样式】作物生长监测 —————— */
+    .grow-module { height: 25%; }
+    .grow-progress { margin: 8px 0; }
+    .grow-bar { height: 6px; background: rgba(0,212,255,.1); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+    .grow-value { height: 100%; background: #00d4ff; border-radius: 3px; }
+    .grow-item { margin-bottom: 8px; }
+    .grow-label { font-size: 13px; display: flex; justify-content: space-between; }
+
+    /* —————— 【新增样式】预警面板 —————— */
+    .warn-panel {
+      position: fixed; top: 100px; left: 10px; z-index: 999;
+      width: 260px; background: rgba(0,30,60,.95); border: 1px solid #00d4ff;
+      padding: 10px; border-radius: 6px; font-size: 12px;
+    }
+    .warn-title { color: #00d4ff; margin-bottom: 8px; font-weight: bold; }
+    .warn-item { display: flex; justify-content: space-between; padding: 4px 0; }
+
+    /* —————— 【新增样式】农事待办 —————— */
+    .todo-list { flex:1; overflow-y: auto; }
+    .todo-item {
+      padding: 8px; background: rgba(0,212,255,.06); border-left: 3px solid #ffd700;
+      margin-bottom: 6px; border-radius: 4px; font-size: 12px;
+    }
+    .todo-text { color: #fff; }
+    .todo-date { color: #999; font-size: 11px; margin-top: 3px; }
+  </style>
+</head>
+<body>
+<div class="big-screen-container">
+  <div class="search-bar">
+    <input class="search-input" id="searchInput" placeholder="搜索设备/图表/地块/品种..." />
+    <button class="search-btn" onclick="doSearch()">搜索</button>
+  </div>
+
+  <!-- 【新增】预警面板 -->
+  <div class="warn-panel" id="warnPanel">
+    <div class="warn-title">⚠️ 智能预警阈值</div>
+    <div class="warn-item"><span>温度上限</span><span>35℃</span></div>
+    <div class="warn-item"><span>湿度下限</span><span>40%</span></div>
+    <div class="warn-item"><span>土壤PH下限</span><span>5.5</span></div>
+    <div class="warn-item"><span>电导率上限</span><span>80</span></div>
+  </div>
+
+  <div class="quick-tool">
+    <div class="tool-btn" onclick="toggleFull()" title="全屏">⛶</div>
+    <div class="tool-btn" onclick="refreshAll()" title="刷新">♻️</div>
+    <div class="tool-btn" onclick="clearAlarm()" title="清空告警">🧹</div>
+    <div class="tool-btn" onclick="exportData()" title="导出数据">📤</div>
+    <div class="tool-btn" onclick="printScreen()" title="打印">🖨️</div>
+  </div>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>智慧农业系统</h1>
+      <div class="nav-tabs">
+        <span class="tab active" data-page="home">首页</span>
+        <span class="tab" data-page="greenhouse">智慧大棚</span>
+        <span class="tab" data-page="device">设备监控</span>
+        <span class="tab" data-page="water">水肥一体化</span>
+        <span class="tab" data-page="farming">农事记录</span>
+        <span class="tab" data-page="setting">系统设置</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="time" id="currentTime">2023-01-06 10:03:17</span>
+      <span class="weather">四川：今天 17℃~29℃</span>
+      <span class="user-icon">👤 admin</span>
+    </div>
+  </div>
+
+  <!-- 原有首页 -->
+  <div class="page active" id="homePage">
+    <div class="main-content">
+      <div class="left-col">
+        <div class="module video-module">
+          <div class="module-title"><span class="dot"></span>1号地-1号监控摄像头</div>
+          <div class="video-placeholder" id="videoBtn"><div class="play-icon">▶</div></div>
+        </div>
+        <div class="module alert-module">
+          <div class="module-title"><span class="dot"></span>葡萄品种种植预警（核心字段）</div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>葡萄品种</th>
+                  <th>饱和数据(亩)</th>
+                  <th>实际数据(亩)</th>
+                  <th>增长率</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody id="alertTableBody">
+                <tr data-id="1"><td>巨峰</td><td>950</td><td>885</td><td class="up">↑ 12.3%</td><td>全国第一大主栽，基数大，增速平稳（均值880-890亩）</td></tr>
+                <tr data-id="2"><td>阳光玫瑰</td><td>1000</td><td>912</td><td class="up">↑ 4.7%</td><td>前期扩种快，2025回归理性，主产区均值约910亩</td></tr>
+                <tr data-id="3"><td>夏黑</td><td>850</td><td>768</td><td class="up">↑ 8.1%</td><td>早熟优势明显，农户稳定种植，增速合理</td></tr>
+                <tr data-id="4"><td>红提</td><td>900</td><td>826</td><td class="up">↑ 2.3%</td><td>传统老品种，趋于饱和，同比小幅增长</td></tr>
+                <tr data-id="5"><td>无核白</td><td>800</td><td>715</td><td class="up">↑ 5.4%</td><td>主产区主流品种，规模稳定，增速平缓</td></tr>
+                <tr data-id="6"><td>金手指</td><td>650</td><td>423</td><td class="down">↓ 6.8%</td><td>小众特色，受众窄，种植意愿下降</td></tr>
+                <tr data-id="7"><td>美人指</td><td>600</td><td>386</td><td class="down">↓ 9.2%</td><td>管理成本高、落果严重，面积持续下滑</td></tr>
+                <tr data-id="8"><td>甜蜜蓝宝石</td><td>750</td><td>572</td><td class="up">↑ 1.5%</td><td>网红热度消退，少量农户种植，增速近停滞</td></tr>
+                <tr data-id="9"><td>玫瑰香</td><td>700</td><td>594</td><td class="up">↑ 7.6%</td><td>香型特色需求回升，小幅扩种，增速稳健</td></tr>
+                <tr data-id="10"><td>青提</td><td>800</td><td>708</td><td class="up">↑ 3.9%</td><td>早熟平价，农户基础量大，同比平稳增长</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="module staff-module">
+          <div class="module-title"><span class="dot"></span>人员结构（30日出勤率）</div>
+          <div class="staff-info"><span>农场总人数：100人</span><span>男：30人 女：70人</span></div>
+          <div id="staffChart" class="chart-box"></div>
+        </div>
+      </div>
+
+      <div class="center-col">
+        <div class="module map-module">
+          <div class="kpi-cards">
+            <div class="kpi-card" id="areaCard"><p>第二季度葡萄种植</p><h2 id="areaValue">8000亩 <span>本季度+6.1%</span></h2></div>
+            <div class="kpi-card" id="yieldCard"><p>第二季度产量</p><h2 id="yieldValue">135000吨</h2></div>
+          </div>
+          <div id="mapChart" class="map-box"></div>
+          <div class="farm-info-card" id="farmCard">
+            <h3>四川示范农场</h3>
+            <img src="farm.png" alt="农场图片" />
+            <p>地址：四川省眉山市</p>
+            <p>负责人：葡香筑梦组</p>
+            <p>联系方式：17780129602</p>
+            <div class="alert-info">
+              <h4>报警信息</h4>
+              <ul id="alertList"></ul>
+            </div>
+          </div>
+          <div id="mapSubChart" class="map-sub-chart"></div>
+          <div class="map-scale">50 km</div>
+        </div>
+        <div class="bottom-stats">
+          <div class="stat-item">
+            <div class="module-title"><span class="dot"></span>土地使用面积</div>
+            <div id="landChart" class="chart-box"></div>
+          </div>
+          <div class="stat-item">
+            <div class="module-title"><span class="dot"></span>葡萄品类结构</div>
+            <div id="cropTypeChart" class="chart-box"></div>
+          </div>
+          <div class="stat-item">
+            <div class="module-title"><span class="dot"></span>葡萄产量排行</div>
+            <div id="cropYieldChart" class="chart-box"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="module env-module">
+          <div class="module-title"><span class="dot"></span>实时环境监测</div>
+          <div class="env-grid">
+            <div class="env-item bg-yellow" data-type="temp"><span class="label">温度：</span><span class="value" id="tempValue">30℃</span></div>
+            <div class="env-item bg-purple" data-type="humidity"><span class="label">湿度：</span><span class="value" id="humidityValue">56%</span></div>
+            <div class="env-item bg-yellow" data-type="pm25"><span class="label">PM2.5：</span><span class="value" id="pm25Value">80</span></div>
+            <div class="env-item bg-yellow" data-type="pm10"><span class="label">PM10：</span><span class="value" id="pm10Value">120</span></div>
+            <div class="env-item bg-blue" data-type="noise"><span class="label">噪声：</span><span class="value" id="noiseValue">50DB</span></div>
+            <div class="env-item bg-blue" data-type="air"><span class="label">空气质量：</span><span class="value" id="airValue">优</span></div>
+            <div class="env-item bg-blue" data-type="windDir"><span class="label">风向：</span><span class="value" id="windDirValue">东南</span></div>
+            <div class="env-item bg-blue" data-type="windSpeed"><span class="label">风速：</span><span class="value" id="windSpeedValue">1.5m/s</span></div>
+            <div class="env-item bg-blue" data-type="uv"><span class="label">紫外线：</span><span class="value" id="uvValue">2级</span></div>
+            <div class="env-item bg-blue" data-type="nh3"><span class="label">氨气值：</span><span class="value" id="nh3Value">56%</span></div>
+          </div>
+        </div>
+
+        <div class="module weather-module">
+          <div class="module-title"><span class="dot"></span>未来7天天气预报</div>
+          <div class="weather-scroll" id="weatherScroll"></div>
+        </div>
+
+        <!-- 【新增】作物生长监测 -->
+        <div class="module grow-module">
+          <div class="module-title"><span class="dot"></span>作物生长监测</div>
+          <div id="growContainer">
+            <div class="grow-item">
+              <div class="grow-label"><span>巨峰葡萄</span><span>75%</span></div>
+              <div class="grow-bar"><div class="grow-value" style="width:75%"></div></div>
+            </div>
+            <div class="grow-item">
+              <div class="grow-label"><span>阳光玫瑰</span><span>68%</span></div>
+              <div class="grow-bar"><div class="grow-value" style="width:68%"></div></div>
+            </div>
+            <div class="grow-item">
+              <div class="grow-label"><span>夏黑葡萄</span><span>82%</span></div>
+              <div class="grow-bar"><div class="grow-value" style="width:82%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="module price-module">
+          <div class="module-title"><span class="dot"></span>农产品价格走势</div>
+          <div id="priceChart" class="chart-box"></div>
+        </div>
+
+        <div class="module soil-module">
+          <div class="module-title"><span class="dot"></span>土地墒情预警</div>
+          <div id="soilChart" class="chart-box"></div>
+          <div class="legend">
+            <span><i style="background:#ffd700"></i>土壤温度</span>
+            <span><i style="background:#00ff9d"></i>土壤水分</span>
+            <span><i style="background:#4facfe"></i>土壤湿度</span>
+            <span><i style="background:#b066ff"></i>土壤PH值</span>
+            <span><i style="background:#ff6b6b"></i>土壤电导率</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 原有智慧大棚 -->
+  <div class="page" id="greenhousePage">
+    <div class="gh-top-kpi">
+      <div class="gh-kpi-card" data-type="greenhouseCount"><div class="gh-kpi-icon icon-blue">🏠</div><div><div class="gh-kpi-title">大棚数量</div><div class="gh-kpi-value">232</div></div></div>
+      <div class="gh-kpi-card" data-type="farmerCount"><div class="gh-kpi-icon icon-purple">👨‍🌾</div><div><div class="gh-kpi-title">服务农户数</div><div class="gh-kpi-value">29</div></div></div>
+      <div class="gh-kpi-card" data-type="plantArea"><div class="gh-kpi-icon icon-blue">🌱</div><div><div class="gh-kpi-title">葡萄总实际面积</div><div class="gh-kpi-value">6789 亩</div></div></div>
+      <div class="gh-kpi-card" data-type="totalMu"><div class="gh-kpi-icon icon-red">📐</div><div><div class="gh-kpi-title">葡萄总饱和面积</div><div class="gh-kpi-value">8000 亩</div></div></div>
+      <div class="gh-kpi-card" data-type="totalYield"><div class="gh-kpi-icon icon-blue">🍇</div><div><div class="gh-kpi-title">品种总数</div><div class="gh-kpi-value">10</div></div></div>
+    </div>
+    <div class="gh-main">
+      <div class="gh-left-col">
+        <div class="gh-chart-module"><div class="gh-chart-title"><span class="dot"></span>区域亩数</div><div id="ghAreaMuChart" class="gh-chart-box"></div></div>
+        <div class="gh-chart-module"><div class="gh-chart-title"><span class="dot"></span>增长/平稳/下滑分布</div><div id="ghProductDistChart" class="gh-chart-box"></div></div>
+        <div class="gh-chart-module"><div class="gh-chart-title"><span class="dot"></span>葡萄品种结构</div><div id="ghStructureChart" class="gh-chart-box"></div></div>
+      </div>
+      <div class="gh-center-col">
+        <div class="gh-chart-module" style="position: relative;">
+          <div class="gh-chart-title"><span class="dot"></span>区域地图（葡萄种植分级）</div>
+          <div id="ghMapChart" class="gh-chart-box"></div>
+          <div class="gh-map-legend">
+            <div class="gh-legend-item"><i style="background:#87ceeb"></i>一级（高种植量）</div>
+            <div class="gh-legend-item"><i style="background:#00bfff"></i>二级（中种植量）</div>
+            <div class="gh-legend-item"><i style="background:#008b8b"></i>三级（低种植量）</div>
+          </div>
+        </div>
+      </div>
+      <div class="gh-right-col">
+        <div class="gh-chart-module"><div class="gh-chart-title"><span class="dot"></span>总产量</div><div id="ghTotalYieldChart" class="gh-chart-box"></div></div>
+        <div class="gh-table-module">
+          <div class="gh-table-title">数据截止日期：05/1（字段：品种/饱和/实际/增长率/备注）</div>
+          <div class="gh-chart-title"><span class="dot"></span>葡萄周期数据统计</div>
+          <div class="gh-table-container">
+            <table>
+              <thead>
+                <tr><th>葡萄品种</th><th>饱和数据(亩)</th><th>实际数据(亩)</th><th>增长率</th><th>备注</th></tr>
+              </thead>
+              <tbody id="ghProductTableBody">
+                <tr><td>巨峰</td><td>950</td><td>885</td><td class="up">↑12.3%</td><td>主栽品种，基数大</td></tr>
+                <tr><td>阳光玫瑰</td><td>1000</td><td>912</td><td class="up">↑4.7%</td><td>扩种放缓，回归理性</td></tr>
+                <tr><td>夏黑</td><td>850</td><td>768</td><td class="up">↑8.1%</td><td>早熟优势明显</td></tr>
+                <tr><td>红提</td><td>900</td><td>826</td><td class="up">↑2.3%</td><td>传统品种，小幅增长</td></tr>
+                <tr><td>无核白</td><td>800</td><td>715</td><td class="up">↑5.4%</td><td>主流稳定品种</td></tr>
+                <tr><td>金手指</td><td>650</td><td>423</td><td class="down">↓6.8%</td><td>小众，意愿下降</td></tr>
+                <tr><td>美人指</td><td>600</td><td>386</td><td class="down">↓9.2%</td><td>管理成本高，持续下滑</td></tr>
+                <tr><td>甜蜜蓝宝石</td><td>750</td><td>572</td><td class="up">↑1.5%</td><td>热度消退，近停滞</td></tr>
+                <tr><td>玫瑰香</td><td>700</td><td>594</td><td class="up">↑7.6%</td><td>需求回升，增速稳健</td></tr>
+                <tr><td>青提</td><td>800</td><td>708</td><td class="up">↑3.9%</td><td>基础量大，平稳增长</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设备监控页面 -->
+  <div class="page" id="devicePage">
+    <div class="device-main">
+      <div class="device-left">
+        <div class="device-card" style="height:30%">
+          <div class="device-title"><span class="dot"></span>设备总览</div>
+          <div class="device-grid">
+            <div class="device-item" onclick="showDeviceDetail('摄像头')">
+              <div class="d-name">摄像头</div>
+              <div class="d-value">12 台</div>
+              <div class="d-status status-on">在线</div>
+            </div>
+            <div class="device-item" onclick="showDeviceDetail('传感器')">
+              <div class="d-name">传感器</div>
+              <div class="d-value">46 个</div>
+              <div class="d-status status-on">正常</div>
+            </div>
+            <div class="device-item" onclick="showDeviceDetail('控制器')">
+              <div class="d-name">控制器</div>
+              <div class="d-value">18 台</div>
+              <div class="d-status status-on">运行</div>
+            </div>
+            <div class="device-item" onclick="showDeviceDetail('阀门')">
+              <div class="d-name">阀门</div>
+              <div class="d-value">32 个</div>
+              <div class="d-status status-on">开启</div>
+            </div>
+          </div>
+        </div>
+        <div class="device-card" style="height:35%">
+          <div class="device-title"><span class="dot"></span>设备控制</div>
+          <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span>大棚通风</span>
+              <div class="device-switch on" id="fanSwitch" onclick="toggleFan()"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span>水肥灌溉</span>
+              <div class="device-switch on" id="waterSwitch" onclick="toggleWater()"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span>补光灯</span>
+              <div class="device-switch" id="lightSwitch" onclick="toggleLight()"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span>遮阳网</span>
+              <div class="device-switch" id="shadowSwitch" onclick="toggleShadow()"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span>蜂鸣告警</span>
+              <div class="device-switch on" id="alarmSwitch" onclick="toggleAlarm()"></div>
+            </div>
+          </div>
+        </div>
+        <div class="device-card" style="height:35%">
+          <div class="device-title"><span class="dot"></span>实时告警</div>
+          <div class="alarm-log" id="alarmLog"></div>
+        </div>
+      </div>
+      <div class="device-center">
+        <div class="device-card" style="height:50%">
+          <div class="device-title"><span class="dot"></span>环境趋势（24小时）</div>
+          <div id="deviceEnvChart" class="device-chart"></div>
+        </div>
+        <div class="device-card" style="height:50%">
+          <div class="device-title"><span class="dot"></span>设备运行统计</div>
+          <div id="deviceRunChart" class="device-chart"></div>
+        </div>
+      </div>
+      <div class="device-right">
+        <div class="device-card" style="height:50%">
+          <div class="device-title"><span class="dot"></span>设备列表</div>
+          <div class="device-table">
+            <table>
+              <thead>
+                <tr><th>设备名称</th><th>编号</th><th>状态</th><th>电量</th><th>信号</th></tr>
+              </thead>
+              <tbody id="deviceTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="device-card" style="height:50%">
+          <div class="device-title"><span class="dot"></span>土壤墒情趋势</div>
+          <div id="deviceSoilChart" class="device-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 水肥一体化 -->
+  <div class="page" id="waterPage">
+    <div class="water-main">
+      <div class="water-left">
+        <div class="water-card" style="height:35%">
+          <div class="water-title">水肥配方</div>
+          <div id="recipeList">
+            <div class="recipe-item" onclick="useRecipe(1)">
+              <div class="recipe-name">葡萄苗期配方</div>
+              <div class="recipe-desc">氮:磷:钾=2:1:1 | 适合幼苗快速生长</div>
+            </div>
+            <div class="recipe-item" onclick="useRecipe(2)">
+              <div class="recipe-name">葡萄膨果配方</div>
+              <div class="recipe-desc">氮:磷:钾=1:2:3 | 提升果实甜度</div>
+            </div>
+            <div class="recipe-item" onclick="useRecipe(3)">
+              <div class="recipe-name">葡萄着色配方</div>
+              <div class="recipe-desc">高磷高钾 | 促进上色、增糖、提质</div>
+            </div>
+            <div class="recipe-item" onclick="useRecipe(4)">
+              <div class="recipe-name">通用均衡配方</div>
+              <div class="recipe-desc">氮:磷:钾=1:1:1 | 全周期适用</div>
+            </div>
+          </div>
+        </div>
+        <div class="water-card" style="height:35%">
+          <div class="water-title">灌溉控制</div>
+          <div class="water-form">
+            <label>灌溉时长（分钟）</label>
+            <input type="number" id="waterTime" value="10" min="1" max="120">
+            <label>灌溉浓度（%）</label>
+            <input type="number" id="waterRate" value="30" min="1" max="100">
+            <label>灌溉区域</label>
+            <input type="text" id="waterArea" value="1号大棚A区">
+          </div>
+          <button class="water-btn" onclick="startWater()">启动灌溉</button>
+          <button class="water-btn" style="background:#ff6b6b;margin-top:6px;" onclick="stopWater()">停止灌溉</button>
+        </div>
+        <div class="water-card" style="height:30%">
+          <div class="water-title">实时状态</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;"><span>运行状态</span><span style="color:#00ff9d" id="waterStatus">运行中</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>累计灌溉</span><span id="waterTotal">1286 分钟</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>肥料消耗</span><span id="waterUse">386 kg</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>当前流量</span><span id="waterFlow">2.6 m³/h</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="water-center">
+        <div class="water-card" style="height:50%">
+          <div class="water-title">灌溉趋势（近30天）</div>
+          <div id="waterTrendChart" class="water-chart"></div>
+        </div>
+        <div class="water-card" style="height:50%">
+          <div class="water-title">肥料消耗分析</div>
+          <div id="waterUseChart" class="water-chart"></div>
+        </div>
+      </div>
+      <div class="water-right">
+        <div class="water-card" style="height:50%">
+          <div class="water-title">灌溉记录</div>
+          <div class="water-table">
+            <table>
+              <thead>
+                <tr><th>时间</th><th>区域</th><th>时长</th><th>配方</th><th>状态</th></tr>
+              </thead>
+              <tbody id="waterRecordBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="water-card" style="height:50%">
+          <div class="water-title">施肥记录</div>
+          <div class="water-table">
+            <table>
+              <thead>
+                <tr><th>时间</th><th>配方</th><th>用量(kg)</th><th>区域</th><th>操作人</th></tr>
+              </thead>
+              <tbody id="waterFertBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 农事记录页面 -->
+  <div class="page" id="farmingPage">
+    <div class="farming-main">
+      <div class="farming-left">
+        <div class="farming-card">
+          <div class="farming-title"><span class="dot"></span>农事日历</div>
+          <div class="farming-calendar" id="farmingCalendar"></div>
+        </div>
+        <div class="farming-card">
+          <div class="farming-title"><span class="dot"></span>农事类型统计</div>
+          <div id="farmingPieChart" class="chart-box" style="flex:1;"></div>
+        </div>
+
+        <div class="farming-card completion-module">
+          <div class="farming-title"><span class="dot"></span>农事完成率</div>
+          <div id="farmingCompletionChart" class="chart-box"></div>
+        </div>
+      </div>
+      <div class="farming-center">
+        <div class="farming-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div class="farming-title"><span class="dot"></span>农事记录列表</div>
+            <button class="add-btn" onclick="openAddFarmingModal()">+ 新增记录</button>
+          </div>
+          <div class="farming-table">
+            <table>
+              <thead>
+                <tr><th>日期</th><th>类型</th><th>内容</th><th>负责人</th><th>地块</th><th>操作</th></tr>
+              </thead>
+              <tbody id="farmingTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="farming-right">
+        <div class="farming-card">
+          <div class="farming-title"><span class="dot"></span>农事趋势（近30天）</div>
+          <div id="farmingTrendChart" class="chart-box" style="flex:1;"></div>
+        </div>
+        <!-- 【新增】农事待办 -->
+        <div class="farming-card">
+          <div class="farming-title"><span class="dot"></span>待办任务</div>
+          <div class="todo-list" id="todoList">
+            <div class="todo-item">
+              <div class="todo-text">5月30日 全园病虫害防治</div>
+              <div class="todo-date">截止时间：2025-05-30</div>
+            </div>
+            <div class="todo-item">
+              <div class="todo-text">6月02日 葡萄疏果作业</div>
+              <div class="todo-date">截止时间：2025-06-02</div>
+            </div>
+            <div class="todo-item">
+              <div class="todo-text">6月05日 施用膨果肥</div>
+              <div class="todo-date">截止时间：2025-06-05</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 系统设置 -->
+  <div class="page" id="settingPage">
+    <div class="set-main">
+      <div class="set-left">
+        <div class="set-card" style="height:50%">
+          <div class="set-title">账户管理</div>
+          <div id="userList">
+            <div class="user-item">
+              <div>
+                <div class="user-name">admin</div>
+                <div class="user-role">超级管理员</div>
+              </div>
+              <span style="color:#00d4ff">在线</span>
+            </div>
+            <div class="user-item">
+              <div>
+                <div class="user-name">worker1</div>
+                <div class="user-role">操作员</div>
+              </div>
+              <span style="color:#ccc">离线</span>
+            </div>
+            <div class="user-item">
+              <div>
+                <div class="user-name">worker2</div>
+                <div class="user-role">操作员</div>
+              </div>
+              <span style="color:#ccc">离线</span>
+            </div>
+            <div class="user-item">
+              <div>
+                <div class="user-name">guest</div>
+                <div class="user-role">访客</div>
+              </div>
+              <span style="color:#ccc">离线</span>
+            </div>
+          </div>
+        </div>
+        <div class="set-card" style="height:50%">
+          <div class="set-title">系统配置</div>
+          <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px;">
+            <div class="set-item">
+              <span class="set-label">自动刷新</span>
+              <div class="device-switch on" onclick="toggleAutoRefresh()"></div>
+            </div>
+            <div class="set-item">
+              <span class="set-label">声音告警</span>
+              <div class="device-switch on" onclick="toggleSoundAlarm()"></div>
+            </div>
+            <div class="set-item">
+              <span class="set-label">屏幕常亮</span>
+              <div class="device-switch on" onclick="toggleKeepScreen()"></div>
+            </div>
+            <div class="set-item">
+              <span class="set-label">自动清洁日志</span>
+              <div class="device-switch" onclick="toggleAutoClear()"></div>
+            </div>
+            <div class="set-item">
+              <span class="set-label">夜间模式</span>
+              <div class="device-switch" onclick="toggleNightMode()"></div>
+            </div>
+          </div>
+          <button class="backup-btn" onclick="backupData()">立即备份数据</button>
+        </div>
+      </div>
+      <div class="set-center">
+        <div class="set-card" style="height:100%">
+          <div class="set-title">系统日志</div>
+          <div class="log-list" id="sysLogList"></div>
+        </div>
+      </div>
+      <div class="set-right">
+        <div class="set-card" style="height:50%">
+          <div class="set-title">告警阈值设置</div>
+          <div class="water-form">
+            <label>温度上限 (℃)</label>
+            <input type="number" value="35" id="tempMax">
+            <label>湿度下限 (%)</label>
+            <input type="number" value="40" id="humMin">
+            <label>土壤PH下限</label>
+            <input type="number" value="5.5" step="0.1" id="phMin">
+            <label>电导率上限</label>
+            <input type="number" value="80" id="ecMax">
+          </div>
+          <button class="water-btn" style="margin-top:10px;" onclick="saveThreshold()">保存阈值</button>
+        </div>
+        <div class="set-card" style="height:50%">
+          <div class="set-title">系统信息</div>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;font-size:14px;">
+            <div style="display:flex;justify-content:space-between;"><span>系统版本</span><span>V3.8.6</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>运行时长</span><span id="runTime">168 天</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>设备在线率</span><span>98.2%</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>数据采集</span><span>正常</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>服务器状态</span><span style="color:#00ff9d">运行中</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>数据库存储</span><span>68%</span></div>
+            <div style="display:flex;justify-content:space-between;"><span>最后更新</span><span id="lastUpdate">2025-12-29</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 -->
+  <div class="modal" id="detailModal">
+    <div class="modal-content">
+      <span class="modal-close" id="modalClose">&times;</span>
+      <div class="modal-title" id="modalTitle">数据详情</div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="addFarmingModal">
+    <div class="modal-content" style="width:500px;">
+      <span class="modal-close" onclick="closeAddFarmingModal()">&times;</span>
+      <div class="modal-title">新增农事记录</div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" id="farmingDate">
+        </div>
+        <div class="form-group">
+          <label>类型</label>
+          <select id="farmingType">
+            <option value="施肥">施肥</option>
+            <option value="打药">打药</option>
+            <option value="除草">除草</option>
+            <option value="疏果">疏果</option>
+            <option value="采摘">采摘</option>
+            <option value="修剪">修剪</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>内容</label>
+          <textarea id="farmingContent" placeholder="请输入农事内容..."></textarea>
+        </div>
+        <div class="form-group">
+          <label>负责人</label>
+          <input type="text" id="farmingPerson" value="admin">
+        </div>
+        <div class="form-group">
+          <label>地块</label>
+          <select id="farmingLand">
+            <option value="1号地">1号地</option>
+            <option value="2号地">2号地</option>
+            <option value="3号地">3号地</option>
+            <option value="1号大棚">1号大棚</option>
+            <option value="2号大棚">2号大棚</option>
+          </select>
+        </div>
+        <button class="water-btn" style="width:100%;" onclick="saveFarmingRecord()">保存记录</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-toast" id="alertToast">⚠️ 土壤PH值异常！请及时处理</div>
+</div>
+
+<script>
+  // ===== 后端接口对接 =====
+  // 后端地址解析优先级：
+  //   1) URL 参数 ?api=http://host:port/api
+  //   2) 全局变量 window.AGRI_API_BASE（可在页面加载前注入）
+  //   3) file:// 直接打开时默认 http://localhost:8080/api
+  //   4) 与后端同源部署时默认 /api
+  function resolveApiBase() {
+    const fromUrl = new URLSearchParams(location.search).get('api');
+    if (fromUrl) return fromUrl;
+    if (window.AGRI_API_BASE) return window.AGRI_API_BASE;
+    if (location.protocol === 'file:') return 'http://localhost:8080/api';
+    return '/api';
+  }
+  const API_BASE = resolveApiBase();
+  async function api(path, options) {
+    const res = await fetch(API_BASE + path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, options));
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  let staffChart, mapChart, mapSubChart, landChart, cropTypeChart, cropYieldChart, soilChart;
+  let ghAreaMuChart, ghProductDistChart, ghMapChart, ghTotalYieldChart, ghStructureChart;
+  let refreshTimer;
+  let deviceEnvChart, deviceRunChart, deviceSoilChart;
+  let waterTrendChart, waterUseChart;
+  let autoRefresh = true;
+  let farmingPieChart, farmingTrendChart, farmingCompletionChart, priceChart;
+  let farmingRecords = [
+    { date: '2025-05-25', type: '施肥', content: '施用膨果肥，钾肥20kg/亩', person: '张三', land: '1号地' },
+    { date: '2025-05-24', type: '打药', content: '防治霜霉病，使用甲霜灵', person: '李四', land: '2号地' },
+    { date: '2025-05-23', type: '疏果', content: '疏除小果、畸形果', person: '王五', land: '1号大棚' },
+    { date: '2025-05-22', type: '除草', content: '人工除草', person: '赵六', land: '3号地' },
+    { date: '2025-05-21', type: '修剪', content: '修剪副梢', person: '张三', land: '2号大棚' }
+  ];
+  const weatherData = [
+    { date: '今天', icon: '☀️', temp: '17~29', desc: '晴' },
+    { date: '明天', icon: '⛅', temp: '18~30', desc: '多云' },
+    { date: '后天', icon: '🌧️', temp: '16~25', desc: '小雨' },
+    { date: '周四', icon: '☁️', temp: '17~27', desc: '阴' },
+    { date: '周五', icon: '☀️', temp: '19~31', desc: '晴' },
+    { date: '周六', icon: '⛅', temp: '20~32', desc: '多云' },
+    { date: '周日', icon: '🌤️', temp: '18~28', desc: '晴间多云' }
+  ];
+  const priceData = {
+    dates: ['05-01', '05-05', '05-10', '05-15', '05-20', '05-25', '05-29'],
+    varieties: [
+      { name: '巨峰', data: [8.5, 8.8, 9.0, 8.7, 9.2, 9.5, 9.3] },
+      { name: '阳光玫瑰', data: [25.0, 24.5, 26.0, 25.5, 27.0, 28.0, 27.5] },
+      { name: '夏黑', data: [12.0, 12.5, 13.0, 12.8, 13.5, 14.0, 13.8] }
+    ]
+  };
+  let grapeVarieties = [
+    { name: "巨峰", sat: 950, actual: 885, rate: 12.3, note: "全国第一大主栽品种，农户种植基数大，增速平稳，调研均值880-890亩。" },
+    { name: "阳光玫瑰", sat: 1000, actual: 912, rate: 4.7, note: "前期扩种快，2025年回归理性，增速放缓，主产区农户平均种植910亩左右。" },
+    { name: "夏黑", sat: 850, actual: 768, rate: 8.1, note: "早熟优势明显，农户稳定种植，实际种植面积贴合饱和值，增速合理。" },
+    { name: "红提", sat: 900, actual: 826, rate: 2.3, note: "传统老品种，种植趋于饱和，同比小幅增长，农户种植面积波动小。" },
+    { name: "无核白", sat: 800, actual: 715, rate: 5.4, note: "新疆主产区农户主流品种，种植规模稳定，增速平缓。" },
+    { name: "金手指", sat: 650, actual: 423, rate: -6.8, note: "小众特色品种，市场受众窄，农户种植意愿下降，面积同比缩减。" },
+    { name: "美人指", sat: 600, actual: 386, rate: -9.2, note: "管理成本高、落果严重，农户弃种扩种少，种植面积持续下滑。" },
+    { name: "甜蜜蓝宝石", sat: 750, actual: 572, rate: 1.5, note: "网红品种热度消退，仅少量农户种植，增速近乎停滞。" },
+    { name: "玫瑰香", sat: 700, actual: 594, rate: 7.6, note: "香型特色品种，市场需求回升，农户小幅扩种，增速稳健。" },
+    { name: "青提", sat: 800, actual: 708, rate: 3.9, note: "早熟平价品种，农户基础种植量大，同比平稳增长。" }
+  ];
+
+  document.addEventListener("DOMContentLoaded", function () {
+    initCharts();
+    initGreenhouseCharts();
+    bindEvents();
+    startDataRefresh();
+    updateTime();
+    setInterval(updateTime, 1000);
+    initDeviceCharts();
+    initWaterCharts();
+    initDeviceTable();
+    initWaterRecord();
+    initSysLog();
+    initAlarmLog();
+    initWeather();
+    initFarmingCalendar();
+    initFarmingCharts();
+    initFarmingTable();
+    initPriceChart();
+    loadAllData();
+  });
+
+  function initCharts() {
+    staffChart = echarts.init(document.getElementById("staffChart"));
+    staffChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 10, right: 10, bottom: 20, left: 40 },
+      xAxis: { type: "category", data: [0, 4, 12, 16, 31], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", max: 100, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      series: [{
+        data: [0, 30, 60, 40, 100], type: "line", smooth: true,
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: "rgba(0,212,255,0.5)" }, { offset: 1, color: "rgba(0,212,255,0.1)" }]) },
+        lineStyle: { color: "#00d4ff" }, itemStyle: { color: "#00d4ff" }
+      }]
+    });
+    staffChart.on("click", p => showModal("人员出勤详情", `日期：${p.name}<br>出勤率：${p.value}%<br>出勤人数：${Math.round(p.value)}人`));
+
+    mapChart = echarts.init(document.getElementById("mapChart"));
+    mapChart.setOption({ backgroundColor: "transparent", graphic: [{ type: "rect", left: 0, top: 0, shape: { width: "100%", height: "100%" }, style: { fill: "rgba(0, 50, 100, 0.5)" } }] });
+    mapChart.on("click", () => showModal("农场地图详情", "四川示范农场实时监控：<br>葡萄总饱和面积：8000亩<br>葡萄实际种植面积：6789亩<br>当前状态：正常"));
+
+    mapSubChart = echarts.init(document.getElementById("mapSubChart"));
+    mapSubChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 10, right: 10, bottom: 20, left: 40 },
+      xAxis: { type: "category", data: ["1", "6", "9", "12", "18", "21", "24"], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", max: 100, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      legend: { data: ["温度", "湿度"], textStyle: { color: "#fff" }, top: 0, left: "center" },
+      series: [
+        { id: "mapTemp", name: "温度", type: "line", data: [30, 40, 60, 30, 35, 40, 35], lineStyle: { color: "#ffd700" }, itemStyle: { color: "#ffd700" } },
+        { id: "mapHumidity", name: "湿度", type: "line", data: [40, 30, 50, 60, 55, 40, 45], lineStyle: { color: "#00d4ff" }, itemStyle: { color: "#00d4ff" } }
+      ]
+    });
+    mapSubChart.on("click", p => showModal(`${p.seriesName}详情`, `时间：${p.name}时<br>${p.seriesName}：${p.value}`));
+
+    landChart = echarts.init(document.getElementById("landChart"));
+    landChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 10, right: 10, bottom: 20, left: 40 },
+      xAxis: { type: "category", data: ["2019", "2020", "2021", "2022", "2023", "2024"], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", max: 9000, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      legend: { data: ["葡萄饱和面积", "葡萄实际面积"], textStyle: { color: "#fff" }, top: 0, left: "center" },
+      series: [
+        { name: "葡萄饱和面积", type: "bar", data: [6200, 6600, 7000, 7400, 7800, 8000], itemStyle: { color: "#00d4ff" } },
+        { name: "葡萄实际面积", type: "bar", data: [5100, 5480, 5920, 6210, 6560, 6789], itemStyle: { color: "#ffd700" } }
+      ]
+    });
+    landChart.on("click", p => showModal(`${p.seriesName}详情`, `年份：${p.name}<br>${p.seriesName}：${p.value}亩`));
+
+    cropTypeChart = echarts.init(document.getElementById("cropTypeChart"));
+    cropTypeChart.on("click", p => showModal(`${p.name}详情`, `实际面积：${p.value}亩<br>占比：${p.percent}%`));
+    cropYieldChart = echarts.init(document.getElementById("cropYieldChart"));
+    cropYieldChart.on("click", p => showModal(`${p.name}详情`, `实际面积：${p.value}亩<br>排名：${p.dataIndex + 1}`));
+    renderGrapeCharts();
+
+    soilChart = echarts.init(document.getElementById("soilChart"));
+    soilChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 10, right: 10, bottom: 20, left: 40 },
+      xAxis: { type: "category", data: ["1", "6", "9", "12", "18", "21", "24"], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", max: 100, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      legend: { data: ["土壤温度", "土壤水分", "土壤湿度", "土壤PH值", "土壤电导率"], textStyle: { color: "#fff" }, top: 0, left: "center" },
+      series: [
+        { id: "soilTemp", name: "土壤温度", type: "line", data: [70, 85, 75, 85, 90, 85, 80], lineStyle: { color: "#ffd700" } },
+        { id: "soilWater", name: "土壤水分", type: "line", data: [20, 25, 30, 25, 30, 25, 20], lineStyle: { color: "#00ff9d" } },
+        { id: "soilHumidity", name: "土壤湿度", type: "line", data: [80, 70, 60, 70, 60, 70, 60], lineStyle: { color: "#4facfe" } },
+        { id: "soilPh", name: "土壤PH值", type: "line", data: [40, 40, 40, 50, 40, 40, 40], lineStyle: { color: "#b066ff" } },
+        { id: "soilEc", name: "土壤电导率", type: "line", data: [60, 60, 60, 55, 60, 65, 60], lineStyle: { color: "#ff6b6b" } }
+      ]
+    });
+    soilChart.on("click", p => {
+      if (p.seriesName === "土壤PH值" && p.value < 50) showAlertToast();
+      showModal(`${p.seriesName}详情`, `时间：${p.name}时<br>${p.seriesName}：${p.value}`);
+    });
+
+    window.addEventListener("resize", resizeAllCharts);
+  }
+
+  function initGreenhouseCharts() {
+    ghAreaMuChart = echarts.init(document.getElementById("ghAreaMuChart"));
+    ghAreaMuChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 10, right: 10, bottom: 20, left: 70 },
+      xAxis: { type: "value", max: 2500, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "category", data: ["洪雅县", "仁寿县", "东坡区", "彭山区"], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      series: [{
+        type: "bar", data: [1600, 1800, 2189, 2200],
+        itemStyle: { color: p => ["#b388ff", "#ffff99", "#90ee90", "#0099ff"][p.dataIndex] },
+        label: { show: true, position: "right", color: "#fff", fontSize: 14 }
+      }]
+    });
+    ghAreaMuChart.on("click", p => showModal(`${p.name}亩数详情`, `区域：${p.name}<br>葡萄实际面积：${p.value}亩`));
+
+    ghProductDistChart = echarts.init(document.getElementById("ghProductDistChart"));
+    ghProductDistChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 30, right: 10, bottom: 20, left: 40 },
+      xAxis: { type: "category", data: ["彭山区", "东坡区", "仁寿县", "洪雅县"], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", max: 2200, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      legend: { data: ["增长型", "平稳型", "下滑型"], textStyle: { color: "#fff" }, top: 0, left: "center", icon: "roundRect" },
+      series: [
+        { name: "增长型", type: "bar", stack: "total", data: [780, 740, 680, 762], itemStyle: { color: "#81c784" } },
+        { name: "平稳型", type: "bar", stack: "total", data: [690, 760, 780, 788], itemStyle: { color: "#4facfe" } },
+        { name: "下滑型", type: "bar", stack: "total", data: [190, 120, 140, 359], itemStyle: { color: "#ff6b6b" } }
+      ]
+    });
+    ghProductDistChart.on("click", p => showModal(`${p.seriesName}详情`, `区域：${p.name}<br>${p.seriesName}面积：${p.value}亩`));
+
+    const areaData = [
+      { name: "彭山区", value: 2200, level: "一级" },
+      { name: "东坡区", value: 2189, level: "一级" },
+      { name: "仁寿县", value: 1800, level: "二级" },
+      { name: "洪雅县", value: 1600, level: "三级" }
+    ];
+
+    ghMapChart = echarts.init(document.getElementById("ghMapChart"));
+    fetch('https://geo.datav.aliyun.com/areas_v3/bound/510000_full.json')
+      .then(response => response.json())
+      .then(geoJson => {
+        echarts.registerMap('sichuan', geoJson);
+        const option = {
+          backgroundColor: "transparent",
+          tooltip: {
+            trigger: 'item',
+            formatter: params => {
+              const item = areaData.find(i => i.name === params.name);
+              return item ? `${item.name}<br>种植面积：${item.value}亩<br>等级：${item.level}` : params.name;
+            }
+          },
+          geo: {
+            map: 'sichuan',
+            roam: true,
+            zoom: 7,
+            center: [103.85, 30.1],
+            label: { show: true, color: '#fff', fontSize: 11 },
+            itemStyle: { areaColor: 'rgba(0,30,60,0.8)', borderColor: '#00d4ff', borderWidth: 1 },
+            emphasis: { itemStyle: { areaColor: 'rgba(0,212,255,0.5)' } }
+          },
+          series: [
+            {
+              type: 'scatter',
+              coordinateSystem: 'geo',
+              data: areaData.map(item => {
+                const coords = {
+                  "彭山区": [103.85, 30.2],
+                  "东坡区": [103.83, 30.05],
+                  "仁寿县": [104.15, 30.0],
+                  "洪雅县": [103.35, 29.9]
+                };
+                return { name: item.name, value: [...coords[item.name], item.value], level: item.level };
+              }),
+              symbolSize: val => val[2] / 35,
+              itemStyle: {
+                color: params => {
+                  const colors = { "一级": "#87ceeb", "二级": "#00bfff", "三级": "#008b8b" };
+                  return colors[params.data.level] || "#00d4ff";
+                },
+                borderColor: '#fff', borderWidth: 1
+              }
+            }
+          ]
+        };
+        ghMapChart.setOption(option);
+        ghMapChart.on('click', params => {
+          const item = areaData.find(i => i.name === params.name);
+          if (item) showModal(`${item.name}详情`, `种植面积：${item.value}亩<br>等级：${item.level}`);
+        });
+      });
+
+    ghTotalYieldChart = echarts.init(document.getElementById("ghTotalYieldChart"));
+    ghTotalYieldChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 30, right: 10, bottom: 20, left: 40 },
+      xAxis: { type: "category", data: ["第一季度", "第二季度", "第三季度", "第四季度"], axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "value", max: 180, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      legend: { data: ["增长型", "平稳型", "下滑型"], textStyle: { color: "#fff" }, top: 0, left: "center" },
+      series: [
+        { name: "增长型", type: "line", data: [72, 86, 95, 102], lineStyle: { color: "#81c784" }, itemStyle: { color: "#81c784" }, label: { show: true, color: "#fff" } },
+        { name: "平稳型", type: "line", data: [64, 68, 70, 73], lineStyle: { color: "#4facfe" }, itemStyle: { color: "#4facfe" }, label: { show: true, color: "#fff" } },
+        { name: "下滑型", type: "line", data: [42, 36, 31, 28], lineStyle: { color: "#ff6b6b" }, itemStyle: { color: "#ff6b6b" }, label: { show: true, color: "#fff" } }
+      ]
+    });
+    ghTotalYieldChart.on("click", p => showModal(`${p.seriesName}产量趋势`, `季度：${p.name}<br>指数：${p.value}`));
+
+    ghStructureChart = echarts.init(document.getElementById("ghStructureChart"));
+    ghStructureChart.setOption({
+      backgroundColor: "transparent",
+      tooltip: { trigger: "item" },
+      series: [{
+        name: "葡萄品种结构", type: "pie", radius: ["30%", "68%"], center: ["50%", "50%"],
+        label: { show: true, color: "#fff", formatter: "{b}\n{value}" },
+        data: grapeVarieties.map((v, i) => ({
+          name: v.name,
+          value: v.actual,
+          itemStyle: { color: ["#00d4ff","#ffd700","#81c784","#ff8a65","#4facfe","#ff6b6b","#b066ff","#f48fb1","#90ee90","#87ceeb"][i] }
+        }))
+      }]
+    });
+    ghStructureChart.on("click", p => showModal(`${p.name}结构详情`, `实际面积：${p.value}亩<br>占比：${p.percent}%`));
+
+    document.querySelectorAll("#ghProductTableBody tr").forEach(tr => {
+      tr.addEventListener("click", function () {
+        const name = this.cells[0].textContent;
+        const sat = this.cells[1].textContent;
+        const actual = this.cells[2].textContent;
+        const rate = this.cells[3].textContent;
+        const note = this.cells[4].textContent;
+        showModal(`${name}数据详情`, `饱和数据：${sat}亩<br>实际数据：${actual}亩<br>增长率：${rate}<br>备注：${note}`);
+      });
+    });
+
+    document.querySelectorAll(".gh-kpi-card").forEach(card => {
+      card.addEventListener("click", function () {
+        const title = this.querySelector(".gh-kpi-title").textContent;
+        const value = this.querySelector(".gh-kpi-value").textContent;
+        showModal(title, `当前${title}：${value}`);
+      });
+    });
+  }
+
+  function bindEvents() {
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", function () {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        this.classList.add("active");
+        const page = this.dataset.page;
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById(`${page}Page`).classList.add("active");
+        setTimeout(resizeAllCharts, 50);
+        if (page === "home") showModal("页面跳转", `即将跳转到【${this.textContent}】页面`);
+      });
+    });
+
+    document.getElementById("videoBtn").addEventListener("click", () => {
+      showModal("监控视频", "1号地实时监控画面：<br>当前状态：正常<br>设备在线：正常");
+    });
+
+    document.querySelectorAll("#alertTableBody tr").forEach(tr => {
+      tr.addEventListener("click", function () {
+        const name = this.cells[0].textContent;
+        const sat = this.cells[1].textContent;
+        const actual = this.cells[2].textContent;
+        const rate = this.cells[3].textContent;
+        const note = this.cells[4].textContent;
+        showModal(`${name}详情`, `葡萄品种：${name}<br>饱和数据：${sat}亩<br>实际数据：${actual}亩<br>增长率：${rate}<br>备注：${note}`);
+      });
+    });
+
+    document.getElementById("areaCard").addEventListener("click", () => {
+      showModal("种植面积详情", "葡萄总饱和面积：8000亩<br>葡萄总实际面积：6789亩<br>整体增长：+6.1%");
+    });
+
+    document.getElementById("yieldCard").addEventListener("click", () => {
+      showModal("品种结构态势", "增长型：巨峰、夏黑、玫瑰香、无核白<br>下滑型：金手指、美人指<br>平稳型：阳光玫瑰、红提、甜蜜蓝宝石、青提");
+    });
+
+    document.getElementById("farmCard").addEventListener("click", () => {
+      showModal("农场详情", "四川示范农场<br>地址：四川省眉山市彭山区<br>负责人：葡香筑梦组<br>联系方式：17780129602<br>数据字段：品种/饱和/实际/增长率/备注");
+    });
+
+    document.querySelectorAll(".env-item").forEach(item => {
+      item.addEventListener("click", function () {
+        const type = this.dataset.type;
+        const label = this.querySelector(".label").textContent;
+        const value = this.querySelector(".value").textContent;
+        showModal(label.replace("：", ""), `当前${label}${value}<br>历史平均值：${getAvgValue(type)}`);
+      });
+    });
+
+    document.getElementById("modalClose").addEventListener("click", closeModal);
+    document.getElementById("detailModal").addEventListener("click", function (e) {
+      if (e.target === this) closeModal();
+    });
+  }
+
+  function startDataRefresh() {
+    updateAlertList();
+    refreshTimer = setInterval(() => {
+      updateEnvData();
+      updateChartData();
+      updateAlertList();
+      refreshExtData();
+      if (Math.random() < 0.1) showAlertToast();
+    }, 5000);
+  }
+
+  function updateAlertList() {
+    loadAlarms();
+  }
+
+  // ===== 后端数据加载与渲染 =====
+  function renderGrapeCharts() {
+    if (!cropTypeChart || !cropYieldChart) return;
+    cropTypeChart.setOption({
+      backgroundColor: "transparent",
+      tooltip: { trigger: "item" },
+      series: [{
+        name: "葡萄品种", type: "pie", radius: ["35%", "70%"], center: ["50%", "52%"],
+        label: { show: true, color: "#fff", formatter: "{b}\n{value}" },
+        data: grapeVarieties.map((v, i) => ({
+          value: v.actual,
+          name: v.name,
+          itemStyle: { color: ["#00d4ff","#ffd700","#81c784","#ff8a65","#4facfe","#ff6b6b","#b066ff","#f48fb1","#90ee90","#87ceeb"][i % 10] }
+        }))
+      }]
+    });
+    const sorted = [...grapeVarieties].sort((a, b) => b.actual - a.actual);
+    cropYieldChart.setOption({
+      backgroundColor: "transparent",
+      grid: { top: 10, right: 10, bottom: 20, left: 90 },
+      xAxis: { type: "value", max: 1000, axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      yAxis: { type: "category", data: sorted.map((v, i) => `TOP${i + 1} ${v.name}`), axisLine: { lineStyle: { color: "#00d4ff" } }, axisLabel: { color: "#fff" } },
+      series: [{ type: "bar", data: sorted.map(v => v.actual), itemStyle: { color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [{ offset: 0, color: "#00d4ff" }, { offset: 1, color: "#b066ff" }]) } }]
+    });
+  }
+
+  function viewVariety(index) {
+    const v = grapeVarieties[index];
+    if (!v) return;
+    const up = v.rate >= 0;
+    showModal(`${v.name}详情`, `葡萄品种：${v.name}<br>饱和数据：${v.sat}亩<br>实际数据：${v.actual}亩<br>增长率：${up ? '↑' : '↓'} ${Math.abs(v.rate)}%<br>备注：${v.note || ''}`);
+  }
+
+  function renderAlertTable() {
+    const tbody = document.getElementById('alertTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = grapeVarieties.map((v, i) => {
+      const up = v.rate >= 0;
+      return `<tr data-id="${i}" onclick="viewVariety(${i})"><td>${v.name}</td><td>${v.sat}</td><td>${v.actual}</td><td class="${up ? 'up' : 'down'}">${up ? '↑' : '↓'} ${Math.abs(v.rate)}%</td><td>${v.note || ''}</td></tr>`;
+    }).join('');
+  }
+
+  async function loadGrapeVarieties() {
+    try {
+      const r = await api('/dashboard/grape/list');
+      if (r.code === 200 && Array.isArray(r.data) && r.data.length) {
+        grapeVarieties = r.data.map(v => ({ name: v.name, sat: v.satArea, actual: v.actualArea, rate: v.rate, note: v.note }));
+        renderGrapeCharts();
+        renderAlertTable();
+      }
+    } catch (e) { /* 后端不可用时保留本地模拟数据 */ }
+  }
+
+  async function loadFarmingRecords() {
+    try {
+      const r = await api('/dashboard/farming/list');
+      if (r.code === 200 && Array.isArray(r.data)) {
+        farmingRecords = r.data.map(x => ({ date: x.farmingDate, type: x.type, content: x.content, person: x.person, land: x.land }));
+        initFarmingTable();
+      }
+    } catch (e) { /* 保留本地模拟数据 */ }
+  }
+
+  async function loadAlarms() {
+    const list = document.getElementById('alertList');
+    if (!list) return;
+    try {
+      const r = await api('/dashboard/alarm/latest');
+      if (r.code === 200 && Array.isArray(r.data) && r.data.length) {
+        list.innerHTML = r.data.map(a => {
+          const levelText = { 1: '紧急', 2: '警告', 3: '提示' }[a.level] || '';
+          const t = (a.createTime || '').replace('T', ' ').slice(0, 16);
+          return `<li>${t} <span class="alert-text">${a.alarmType}${levelText ? '·' + levelText : ''}</span></li>`;
+        }).join('');
+      }
+    } catch (e) { /* 忽略 */ }
+  }
+
+  async function loadConfig() {
+    try {
+      const r = await api('/dashboard/config/list');
+      if (r.code === 200 && Array.isArray(r.data)) {
+        const map = {};
+        r.data.forEach(c => { map[c.configKey] = c.configValue; });
+        if (map.temp_max != null) document.getElementById('tempMax').value = map.temp_max;
+        if (map.hum_min != null) document.getElementById('humMin').value = map.hum_min;
+        if (map.ph_min != null) document.getElementById('phMin').value = map.ph_min;
+        if (map.ec_max != null) document.getElementById('ecMax').value = map.ec_max;
+      }
+    } catch (e) { /* 忽略 */ }
+  }
+
+  function loadAllData() {
+    loadGrapeVarieties();
+    loadFarmingRecords();
+    loadAlarms();
+    loadConfig();
+  }
+
+  function updateEnvData() {
+    document.getElementById("tempValue").textContent = `${Math.floor(Math.random() * 5) + 28}℃`;
+    document.getElementById("humidityValue").textContent = `${Math.floor(Math.random() * 11) + 50}%`;
+    document.getElementById("pm25Value").textContent = Math.floor(Math.random() * 21) + 70;
+    document.getElementById("pm10Value").textContent = Math.floor(Math.random() * 21) + 110;
+  }
+
+  function updateChartData() {
+    const t = mapSubChart.getOption().series[0].data;
+    const h = mapSubChart.getOption().series[1].data;
+    const nt = t.map(v => Math.max(20, Math.min(70, v + Math.floor(Math.random() * 11) - 5)));
+    const nh = h.map(v => Math.max(30, Math.min(70, v + Math.floor(Math.random() * 11) - 5)));
+    mapSubChart.setOption({ series: [{ id: "mapTemp", data: nt }, { id: "mapHumidity", data: nh }] });
+
+    const phData = soilChart.getOption().series[3].data;
+    const nph = phData.map(v => Math.max(30, Math.min(60, v + Math.floor(Math.random() * 11) - 5)));
+    soilChart.setOption({ series: [{ id: "soilPh", data: nph }] });
+  }
+
+  function resizeAllCharts() {
+    [staffChart, mapChart, mapSubChart, landChart, cropTypeChart, cropYieldChart, soilChart,
+     ghAreaMuChart, ghProductDistChart, ghMapChart, ghTotalYieldChart, ghStructureChart,
+     deviceEnvChart,deviceRunChart,deviceSoilChart,waterTrendChart,waterUseChart,
+     farmingPieChart, farmingTrendChart, farmingCompletionChart, priceChart]
+      .forEach(c => c && c.resize());
+  }
+
+  function showModal(title, content) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalBody").innerHTML = content;
+    document.getElementById("detailModal").style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById("detailModal").style.display = "none";
+  }
+
+  function showAlertToast() {
+    const toast = document.getElementById("alertToast");
+    toast.style.display = "block";
+    setTimeout(() => { toast.style.display = "none"; }, 3000);
+  }
+
+  function updateTime() {
+    const now = new Date();
+    document.getElementById("currentTime").textContent = now.toLocaleString("zh-CN", {
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+  }
+
+  function getAvgValue(type) {
+    const avgMap = {
+      temp: "30℃", humidity: "55%", pm25: "80", pm10: "120",
+      noise: "50DB", air: "优", windDir: "东南", windSpeed: "1.5m/s", uv: "2级", nh3: "56%"
+    };
+    return avgMap[type] || "无数据";
+  }
+
+  window.addEventListener("beforeunload", () => clearInterval(refreshTimer));
+
+  function initDeviceCharts() {
+    deviceEnvChart = echarts.init(document.getElementById("deviceEnvChart"));
+    deviceEnvChart.setOption({
+      backgroundColor:'transparent',grid:{top:20,right:20,bottom:20,left:40},
+      xAxis:{type:'category',data:['0','4','8','12','16','20','24'],axisLine:{lineStyle:{color:'#00d4ff'}},axisLabel:{color:'#fff'}},
+      yAxis:{type:'value',axisLine:{lineStyle:{color:'#00d4ff'}},axisLabel:{color:'#fff'}},
+      legend:{data:['温度','湿度','PM2.5'],textStyle:{color:'#fff'}},
+      series:[
+        {name:'温度',type:'line',data:[30,32,34,33,31,29,28],itemStyle:{color:'#ffd700'},lineStyle:{color:'#ffd700'}},
+        {name:'湿度',type:'line',data:[55,53,50,48,52,55,58],itemStyle:{color:'#00d4ff'},lineStyle:{color:'#00d4ff'}},
+        {name:'PM2.5',type:'line',data:[70,75,80,78,72,68,65],itemStyle:{color:'#ff6b6b'},lineStyle:{color:'#ff6b6b'}}
+      ]
+    });
+    deviceRunChart = echarts.init(document.getElementById("deviceRunChart"));
+    deviceRunChart.setOption({
+      backgroundColor:'transparent',
+      series:[{type:'pie',radius:['40%','70%'],
+        data:[
+          {value:68,name:'在线'},
+          {value:12,name:'离线'},
+          {value:20,name:'故障'}
+        ],
+        label:{color:'#fff'},
+        itemStyle:{colors:['#00d4ff','#ccc','#ff6b6b']}
+      }]
+    });
+    deviceSoilChart = echarts.init(document.getElementById("deviceSoilChart"));
+    deviceSoilChart.setOption({
+      backgroundColor:'transparent',grid:{top:20,right:20,bottom:20,left:40},
+      xAxis:{type:'category',data:['0','4','8','12','16','20','24'],axisLine:{lineStyle:{color:'#00d4ff'}},axisLabel:{color:'#fff'}},
+      yAxis:{type:'value',axisLine:{lineStyle:{color:'#00d4ff'}},axisLabel:{color:'#fff'}},
+      legend:{data:['水分','湿度','PH','EC'],textStyle:{color:'#fff'}},
+      series:[
+        {name:'水分',type:'line',data:[20,25,30,28,25,22,20],itemStyle:{color:'#00ff9d'}},
+        {name:'湿度',type:'line',data:[60,65,70,68,65,62,60],itemStyle:{color:'#4facfe'}},
+        {name:'PH',type:'line',data:[50,48,45,47,50,52,50],itemStyle:{color:'#b066ff'}},
+        {name:'EC',type:'line',data:[60,62,65,63,60,58,60],itemStyle:{color:'#ff6b6b'}}
+      ]
+    });
+  }
+
+  function initWaterCharts() {
+    waterTrendChart = echarts.init(document.getElementById("waterTrendChart"));
+    waterTrendChart.setOption({
+      backgroundColor:'transparent',grid:{top:20,right:20,bottom:20,left:40},
+      xAxis:{type:'category',data:['1','5','10','15','20','25','30'],axisLine:{lineStyle:{color:'#00d4ff'}},axisLabel:{color:'#fff'}},
+      yAxis:{type:'value',axisLine:{lineStyle:{color:'#00d4ff'}},axisLabel:{color:'#fff'}},
+      series:[{name:'灌溉时长',type:'bar',data:[20,30,25,40,35,30,28],itemStyle:{color:'#00d4ff'}}]
+    });
+    waterUseChart = echarts.init(document.getElementById("waterUseChart"));
+    waterUseChart.setOption({
+      backgroundColor:'transparent',
+      series:[{type:'pie',radius:['40%','70%'],
+        data:[
+          {value:40,name:'苗期肥'},
+          {value:30,name:'膨果肥'},
+          {value:20,name:'着色肥'},
+          {value:10,name:'均衡肥'}
+        ],
+        label:{color:'#fff'},
+        itemStyle:{colors:['#00d4ff','#ffd700','#ff6b6b','#81c784']}
+      }]
+    });
+  }
+
+  function initDeviceTable() {
+    const arr = [
+      ['摄像头','CAM-01','在线','92%','-67dBm'],
+      ['传感器','SEN-01','正常','86%','-72dBm'],
+      ['控制器','CTL-01','运行','95%','-62dBm'],
+      ['阀门','VAL-01','开启','88%','-70dBm'],
+      ['摄像头','CAM-02','在线','90%','-68dBm'],
+      ['传感器','SEN-02','正常','85%','-73dBm']
+    ];
+    const b = document.getElementById('deviceTableBody');
+    b.innerHTML = arr.map(i=>`<tr><td>${i[0]}</td><td>${i[1]}</td><td><span style="color:#00ff9d">${i[2]}</span></td><td>${i[3]}</td><td>${i[4]}</td></tr>`).join('');
+  }
+
+  function initWaterRecord() {
+    const arr = [
+      ['05-28 10:00','1号棚','12分钟','苗期配方','完成'],
+      ['05-28 14:20','2号棚','10分钟','膨果配方','完成'],
+      ['05-28 16:10','3号棚','15分钟','着色配方','完成'],
+      ['05-29 08:30','1号棚','8分钟','均衡配方','完成']
+    ];
+    const b = document.getElementById('waterRecordBody');
+    b.innerHTML = arr.map(i=>`<tr><td>${i[0]}</td><td>${i[1]}</td><td>${i[2]}</td><td>${i[3]}</td><td style="color:#00ff9d">${i[4]}</td></tr>`).join('');
+
+    const f = [
+      ['05-28 11:00','苗期配方','12','1号棚','admin'],
+      ['05-28 15:00','膨果配方','10','2号棚','admin'],
+      ['05-29 09:00','均衡配方','8','3号棚','worker1']
+    ];
+    const fb = document.getElementById('waterFertBody');
+    fb.innerHTML = f.map(i=>`<tr><td>${i[0]}</td><td>${i[1]}</td><td>${i[2]}</td><td>${i[3]}</td><td>${i[4]}</td></tr>`).join('');
+  }
+
+  function initSysLog() {
+    const list = document.getElementById('sysLogList');
+    const logs = [
+      '2025-05-29 10:00:00 [系统] 启动成功',
+      '2025-05-29 10:01:00 [设备] 摄像头1在线',
+      '2025-05-29 10:05:00 [水肥] 启动灌溉',
+      '2025-05-29 10:10:00 [告警] 土壤PH值偏低',
+      '2025-05-29 10:15:00 [用户] admin登录',
+      '2025-05-29 10:20:00 [设备] 传感器数据更新',
+      '2025-05-29 10:25:00 [水肥] 停止灌溉',
+      '2025-05-29 10:30:00 [系统] 数据备份完成'
+    ];
+    list.innerHTML = logs.map(i=>`<div class="log-item"><span class="log-time">${i.split(' ')[0]} ${i.split(' ')[1]}</span><span class="log-text">${i.substring(20)}</span></div>`).join('');
+  }
+
+  function initAlarmLog() {
+    const log = document.getElementById('alarmLog');
+    setInterval(()=>{
+      const t = new Date().toLocaleString();
+      const txt = ['温度偏高','湿度过低','土壤PH异常','电导率偏高'][Math.floor(Math.random()*4)];
+      log.insertAdjacentHTML('afterbegin',`<div class="alarm-item"><span class="time">${t}</span><span class="text">${txt}</span></div>`);
+      if(log.children.length>12) log.lastChild.remove();
+    },8000);
+  }
+
+  function refreshExtData() {
+    document.getElementById('waterTotal').textContent = `${Math.floor(Math.random()*200)+1200} 分钟`;
+    document.getElementById('waterUse').textContent = `${Math.floor(Math.random()*100)+350} kg`;
+    document.getElementById('waterFlow').textContent = `${(Math.random()*2+2).toFixed(1)} m³/h`;
+  }
+
+  function toggleFull() {
+    if(!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+
+  function refreshAll() {
+    location.reload();
+  }
+
+  function clearAlarm() {
+    document.getElementById('alarmLog').innerHTML = '';
+    showModal('操作成功','已清空实时告警');
+  }
+
+  function doSearch() {
+    const v = document.getElementById('searchInput').value.trim();
+    if(!v) return showModal('搜索','请输入关键词');
+    showModal('搜索结果',`正在搜索：${v}<br>匹配到【设备/图表/地块】相关内容`);
+  }
+
+  function showDeviceDetail(t) {
+    showModal(`${t}详情`,`${t}总数：${Math.floor(Math.random()*50)+10}台<br>在线率：98%<br>运行状态：正常`);
+  }
+
+  function toggleFan() {
+    const e = document.getElementById('fanSwitch');
+    e.classList.toggle('on');
+    showModal('通风控制',`大棚通风已${e.classList.contains('on')?'开启':'关闭'}`);
+  }
+  function toggleWater() {
+    const e = document.getElementById('waterSwitch');
+    e.classList.toggle('on');
+    showModal('灌溉控制',`水肥灌溉已${e.classList.contains('on')?'开启':'关闭'}`);
+  }
+  function toggleLight() {
+    const e = document.getElementById('lightSwitch');
+    e.classList.toggle('on');
+    showModal('补光灯控制',`补光灯已${e.classList.contains('on')?'开启':'关闭'}`);
+  }
+  function toggleShadow() {
+    const e = document.getElementById('shadowSwitch');
+    e.classList.toggle('on');
+    showModal('遮阳网控制',`遮阳网已${e.classList.contains('on')?'开启':'关闭'}`);
+  }
+  function toggleAlarm() {
+    const e = document.getElementById('alarmSwitch');
+    e.classList.toggle('on');
+    showModal('告警控制',`蜂鸣告警已${e.classList.contains('on')?'开启':'关闭'}`);
+  }
+
+  function useRecipe(id) {
+    const name = ['葡萄苗期配方','葡萄膨果配方','葡萄着色配方','通用均衡配方'][id-1];
+    showModal('配方切换',`已切换为：${name}`);
+  }
+
+  function startWater() {
+    const t = document.getElementById('waterTime').value;
+    const r = document.getElementById('waterRate').value;
+    const a = document.getElementById('waterArea').value;
+    document.getElementById('waterStatus').textContent = '运行中';
+    document.getElementById('waterStatus').style.color = '#00ff9d';
+    showModal('启动灌溉',`区域：${a}<br>时长：${t}分钟<br>浓度：${r}%`);
+  }
+  function stopWater() {
+    document.getElementById('waterStatus').textContent = '已停止';
+    document.getElementById('waterStatus').style.color = '#ff6b6b';
+    showModal('停止灌溉','灌溉已手动停止');
+  }
+
+  function toggleAutoRefresh() {
+    autoRefresh = !autoRefresh;
+    showModal('设置',`自动刷新已${autoRefresh?'开启':'关闭'}`);
+  }
+  function toggleSoundAlarm() { showModal('设置','声音告警已切换'); }
+  function toggleKeepScreen() { showModal('设置','屏幕常亮已切换'); }
+  function toggleAutoClear() { showModal('设置','自动清日志已切换'); }
+  function toggleNightMode() { showModal('设置','夜间模式已切换'); }
+
+  function backupData() {
+    showModal('数据备份','系统数据备份中...<br>备份完成！');
+  }
+  async function saveThreshold() {
+    const list = [
+      { configKey: 'temp_max', configValue: document.getElementById('tempMax').value },
+      { configKey: 'hum_min', configValue: document.getElementById('humMin').value },
+      { configKey: 'ph_min', configValue: document.getElementById('phMin').value },
+      { configKey: 'ec_max', configValue: document.getElementById('ecMax').value }
+    ];
+    try {
+      await api('/dashboard/config/save', { method: 'POST', body: JSON.stringify(list) });
+      showModal('保存成功', '告警阈值已保存到数据库');
+    } catch (e) {
+      showModal('保存成功', '告警阈值已保存(本地)');
+    }
+  }
+
+  function initWeather() {
+    const container = document.getElementById('weatherScroll');
+    container.innerHTML = weatherData.map(w => `
+      <div class="weather-item">
+        <div class="weather-date">${w.date}</div>
+        <div class="weather-icon">${w.icon}</div>
+        <div class="weather-temp">${w.temp}℃</div>
+        <div class="weather-desc">${w.desc}</div>
+      </div>
+    `).join('');
+  }
+
+  function initFarmingCalendar() {
+    const container = document.getElementById('farmingCalendar');
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = now.getDate();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+    let html = weekDays.map(d => `<div class="calendar-header">${d}</div>`).join('');
+
+    for (let i = 0; i < firstDay; i++) {
+      html += '<div class="calendar-day"></div>';
+    }
+
+    const eventDates = [23, 24, 25, 27];
+    for (let i = 1; i <= daysInMonth; i++) {
+      const isToday = i === today;
+      const hasEvent = eventDates.includes(i);
+      html += `<div class="calendar-day ${isToday ? 'today' : ''} ${hasEvent ? 'has-event' : ''}">${i}</div>`;
+    }
+
+    container.innerHTML = html;
+  }
+
+  function initFarmingCharts() {
+    farmingPieChart = echarts.init(document.getElementById('farmingPieChart'));
+    farmingPieChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'item' },
+      series: [{
+        name: '农事类型',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        data: [
+          { value: 30, name: '施肥', itemStyle: { color: '#ffd700' } },
+          { value: 25, name: '打药', itemStyle: { color: '#ff6b6b' } },
+          { value: 20, name: '除草', itemStyle: { color: '#00ff9d' } },
+          { value: 15, name: '疏果', itemStyle: { color: '#4facfe' } },
+          { value: 10, name: '其他', itemStyle: { color: '#b066ff' } }
+        ],
+        label: { color: '#fff' }
+      }]
+    });
+
+    farmingTrendChart = echarts.init(document.getElementById('farmingTrendChart'));
+    farmingTrendChart.setOption({
+      backgroundColor: 'transparent',
+      grid: { top: 20, right: 20, bottom: 20, left: 40 },
+      xAxis: { type: 'category', data: ['05-01','05-05','05-10','05-15','05-20','05-25','05-29'], axisLine: { lineStyle: { color: '#00d4ff' } }, axisLabel: { color: '#fff' } },
+      yAxis: { type: 'value', axisLine: { lineStyle: { color: '#00d4ff' } }, axisLabel: { color: '#fff' } },
+      series: [{
+        name: '农事次数',
+        type: 'line',
+        smooth: true,
+        data: [2, 5, 3, 8, 6, 4, 5],
+        itemStyle: { color: '#00d4ff' },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(0,212,255,0.5)' }, { offset: 1, color: 'rgba(0,212,255,0.1)' }]) }
+      }]
+    });
+
+    farmingCompletionChart = echarts.init(document.getElementById('farmingCompletionChart'));
+    farmingCompletionChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'item' },
+      series: [{
+        name: '农事完成率',
+        type: 'pie',
+        radius: ['50%', '75%'],
+        data: [
+          { value: 85, name: '已完成', itemStyle: { color: '#00ff9d' } },
+          { value: 15, name: '未完成', itemStyle: { color: '#ff6b6b' } }
+        ],
+        label: { color: '#fff', formatter: '{b}: {c}%' }
+      }]
+    });
+  }
+
+  function initFarmingTable() {
+    const tbody = document.getElementById('farmingTableBody');
+    tbody.innerHTML = farmingRecords.map((r, i) => `
+      <tr>
+        <td>${r.date}</td>
+        <td>${r.type}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.content}</td>
+        <td>${r.person}</td>
+        <td>${r.land}</td>
+        <td><span style="color:#00d4ff;cursor:pointer;" onclick="viewFarmingDetail(${i})">查看</span></td>
+      </tr>
+    `).join('');
+  }
+
+  function openAddFarmingModal() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('farmingDate').value = today;
+    document.getElementById('addFarmingModal').style.display = 'flex';
+  }
+
+  function closeAddFarmingModal() {
+    document.getElementById('addFarmingModal').style.display = 'none';
+  }
+
+  async function saveFarmingRecord() {
+    const date = document.getElementById('farmingDate').value;
+    const type = document.getElementById('farmingType').value;
+    const content = document.getElementById('farmingContent').value;
+    const person = document.getElementById('farmingPerson').value;
+    const land = document.getElementById('farmingLand').value;
+
+    if (!date || !content) {
+      return showModal('提示', '请填写完整信息！');
+    }
+
+    try {
+      await api('/dashboard/farming/add', { method: 'POST', body: JSON.stringify({ farmingDate: date, type, content, person, land }) });
+      await loadFarmingRecords();
+      closeAddFarmingModal();
+      showModal('成功', '农事记录已保存！');
+      document.getElementById('farmingContent').value = '';
+    } catch (e) {
+      farmingRecords.unshift({ date, type, content, person, land });
+      initFarmingTable();
+      closeAddFarmingModal();
+      showModal('成功', '农事记录已保存(本地)！');
+      document.getElementById('farmingContent').value = '';
+    }
+  }
+
+  function viewFarmingDetail(index) {
+    const r = farmingRecords[index];
+    showModal('农事详情', `
+      <strong>日期：</strong>${r.date}<br/>
+      <strong>类型：</strong>${r.type}<br/>
+      <strong>内容：</strong>${r.content}<br/>
+      <strong>负责人：</strong>${r.person}<br/>
+      <strong>地块：</strong>${r.land}
+    `);
+  }
+
+  function initPriceChart() {
+    priceChart = echarts.init(document.getElementById('priceChart'));
+    const option = {
+      backgroundColor: 'transparent',
+      tooltip: { trigger: 'axis' },
+      legend: { data: priceData.varieties.map(v => v.name), textStyle: { color: '#fff' }, top: 0 },
+      grid: { top: 30, right: 10, bottom: 20, left: 40 },
+      xAxis: {
+        type: 'category',
+        data: priceData.dates,
+        axisLine: { lineStyle: { color: '#00d4ff' } },
+        axisLabel: { color: '#fff' }
+      },
+      yAxis: {
+        type: 'value',
+        name: '价格(元/kg)',
+        axisLine: { lineStyle: { color: '#00d4ff' } },
+        axisLabel: { color: '#fff' }
+      },
+      series: priceData.varieties.map((v, i) => ({
+        name: v.name,
+        type: 'line',
+        smooth: true,
+        data: v.data,
+        itemStyle: { color: ['#ffd700', '#ff6b6b', '#00d4ff'][i] },
+        lineStyle: { width: 2 }
+      }))
+    };
+    priceChart.setOption(option);
+    priceChart.on('click', (params) => {
+      showModal('价格详情', `
+        <strong>品种：</strong>${params.seriesName}<br/>
+        <strong>日期：</strong>${params.name}<br/>
+        <strong>价格：</strong>${params.value} 元/kg
+      `);
+    });
+  }
+
+
+  function exportData(){
+    showModal("导出成功","数据已导出为 Excel 表格！");
+  }
+
+
+  function printScreen(){
+    window.print();
+  }
+
+  document.getElementById('addFarmingModal').addEventListener('click', function(e) {
+    if (e.target === this) closeAddFarmingModal();
+  });
+</script>
+</body>
+</html>
